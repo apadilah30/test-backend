@@ -58,9 +58,9 @@ class TransactionControllerTest extends TestCase
         // Make a request to the index method
         $response = $this->actingAs($customer->user)
             ->get('/api/transactions');
-        dd($response);
+        
         // Assert the response
-        $response->assertStatus(200);
+        $response->assertOk();
     }
 
     /**
@@ -73,15 +73,21 @@ class TransactionControllerTest extends TestCase
         // Create a customer
         $customer = Customer::factory()->create();
 
+        // create a customer address
+        $customer_address = CustomerAddress::create([
+            'customer_id' => $customer->id,
+            'address' => "Indonesia",
+        ]);
+
         // Create products
         $products = Product::factory()->count(2)->create();
 
         // Create payment method
         $payment_methods = PaymentMethod::factory()->count(2)->create();
-
+        
         // Prepare the request data
         $requestData = [
-            'address_id' => 1,
+            'address_id' => $customer_address->id,
             'products' => [
                 [
                     'id' => $products[0]->id,
@@ -98,14 +104,14 @@ class TransactionControllerTest extends TestCase
         // Make a request to the store method
         $response = $this->actingAs($customer->user)
             ->post('/api/transactions', $requestData);
-
+            
         // Assert the response
-        $response->assertStatus(200);
+        $response->assertCreated();
 
         // Assert the transaction and related models are created in the database
         $this->assertDatabaseHas('transactions', [
             'customer_id' => $customer->id,
-            'address_id' => $requestData['address_id']
+            'customer_address_id' => $requestData['address_id']
         ]);
     }
 
@@ -148,8 +154,8 @@ class TransactionControllerTest extends TestCase
         // Make a request to the show method
         $response = $this->actingAs($customer->user)
             ->get('/api/transactions/' . $transaction->id);
-
+        
         // Assert the response
-        $response->assertStatus(200);
+        $response->assertOk();
     }
 }

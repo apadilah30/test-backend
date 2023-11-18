@@ -31,7 +31,7 @@ class TransactionController extends Controller
             return response()->json([
                 'message' => $e->getMessage(),
                 'data' => null,
-            ], $e->getCode());
+            ], 500);
         }
     }
 
@@ -44,7 +44,7 @@ class TransactionController extends Controller
                 ->select('id', 'price')
                 ->get();
 
-            $total_price = array_map(function ($product) use ($request) {
+            $total_price_array = array_map(function ($product) use ($request) {
                 $product['qty'] = $request->products[
                     array_search($product['id'], 
                     array_column($request->products, 'id'))
@@ -53,9 +53,11 @@ class TransactionController extends Controller
                 return $product['price'] * $product['qty'];
             }, $products->toArray());
 
+            $total_price = array_sum($total_price_array);
+
             $transaction = Transaction::create([
                 'customer_id' => auth()->user()->customer->id,
-                'address_id' => $request->address_id,
+                'customer_address_id' => $request->address_id,
                 'total_price' => $total_price,
                 'date' => now()->format('Y-m-d'),
                 'times' => now()->format('H:i:s'),
@@ -82,12 +84,17 @@ class TransactionController extends Controller
             }
 
             DB::commit();
+
+            return response()->json([
+                'message' => 'Success create transaction',
+                'data' => $transaction,
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'message' => $e->getMessage(),
                 'data' => null,
-            ], $e->getCode());
+            ], 500);
         }
     }
 
@@ -108,7 +115,7 @@ class TransactionController extends Controller
             return response()->json([
                 'message' => $e->getMessage(),
                 'data' => null,
-            ], $e->getCode());
+            ], 500);
         }
     }
 }

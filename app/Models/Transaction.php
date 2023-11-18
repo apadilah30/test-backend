@@ -18,6 +18,6 @@ class Transaction extends Model
      */
     public function products(): HasManyThrough
     {
-        return $this->hasManyThrough(Product::class, TransactionProduct::class);
+        return $this->hasManyThrough(Product::class, TransactionProduct::class, 'transaction_id', 'id', 'id', 'product_id');
     }
 }
